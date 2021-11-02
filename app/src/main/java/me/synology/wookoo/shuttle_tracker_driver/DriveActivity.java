@@ -59,9 +59,11 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                 if(!start){
                     //블루투스 페어링 확인하는부분
                     locationManager.removeUpdates(DriveActivity.this);
+                    mButton.setText("운행시작");
 
                     return;
                 }
+                mButton.setText("운행종료");
 
                 if (ActivityCompat.checkSelfPermission(DriveActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     return;
