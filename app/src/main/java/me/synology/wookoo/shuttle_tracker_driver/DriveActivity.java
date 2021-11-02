@@ -13,18 +13,35 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DriveActivity extends AppCompatActivity implements LocationListener{
     private LocationManager locationManager;
     private String TAG = "GPS POSITION";
+
+    boolean start = false;
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_drive);
 
+
+        //인텐트에서 sender 받아오기
 
 
         locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
@@ -37,13 +54,24 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                start = !start;
+                Toast.makeText(DriveActivity.this,"버튼 눌림" + start,Toast.LENGTH_SHORT).show();
+                if(!start){
+                    //블루투스 페어링 확인하는부분
+                    locationManager.removeUpdates(DriveActivity.this);
+
+                    return;
+                }
+
                 if (ActivityCompat.checkSelfPermission(DriveActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     return;
                 }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, DriveActivity.this);
-
+                //여기서 GPS 전송 스레드 시작
             }
         });
+
+
 
 
 
@@ -69,8 +97,37 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
         if(location.getProvider().equals(LocationManager.GPS_PROVIDER)) {
             latitude = location.getLatitude();
             longitude = location.getLongitude();
+            //여기서 전송을 하는게 맞는듯
 
             Log.d(TAG + " GPS : ", Double.toString(latitude )+ '/' + Double.toString(longitude));
+
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl("http://192.168.1.2:8000")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+            RetrofitAPI r = retrofit.create(RetrofitAPI.class);
+            JSONObject input = new JSONObject();
+            try {
+                input.put("lat",Math.round(latitude*10000)/10000.0);
+                input.put("lon",Math.round(longitude*10000)/10000.0);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            Call<busUploadData> call = r.upload(input);
+            call.enqueue(new Callback<busUploadData>() {
+                @Override
+                public void onResponse(Call<busUploadData> call, Response<busUploadData> response) {
+                    busUploadData r = response.body();
+                    Log.d("rr",r.getStatus()+"");
+                }
+
+                @Override
+                public void onFailure(Call<busUploadData> call, Throwable t) {
+                    Log.d("rt",t.getMessage()+"");
+                }
+            });
+
+
         }
 
 

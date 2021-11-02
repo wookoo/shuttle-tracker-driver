@@ -3,6 +3,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/dohyun/Desktop/sogong/shuttle-tracker-driver/app/src/main/res/xml/network_security_config.xml" value="0.21302083333333333" />
         <entry key="app/src/main/res/layout/activity_drive.xml" value="0.20677083333333332" />
         <entry key="app/src/main/res/layout/activity_gpstest.xml" value="0.19270833333333334" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.20677083333333332" />
