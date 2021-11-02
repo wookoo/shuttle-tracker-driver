@@ -2,16 +2,13 @@ package me.synology.wookoo.shuttle_tracker_driver;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Intent;
 import android.os.Bundle;
 
-public class MainActivity extends AppCompatActivity {
+public class GPSTestActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        startActivity(new Intent(MainActivity.this,DriveActivity.class));
-        finish();
+        setContentView(R.layout.activity_gpstest);
     }
 }

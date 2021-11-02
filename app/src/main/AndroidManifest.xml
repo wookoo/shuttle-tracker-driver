@@ -18,6 +18,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Shuttletrackerdriver">
         <activity
+            android:name=".GPSTestActivity"
+            android:exported="true" />
+        <activity
             android:name=".DriveActivity"
             android:exported="true" />
         <activity

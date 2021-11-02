@@ -11,12 +11,13 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import java.util.List;
 
 public class DriveActivity extends AppCompatActivity implements LocationListener{
     private LocationManager locationManager;
-    private List<String> listProviders;
     private String TAG = "GPS POSITION";
 
     @Override
@@ -24,24 +25,27 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_drive);
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
+
 
         locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 
-        Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if (lastKnownLocation != null) {
-            double lng = lastKnownLocation.getLongitude();
-            double lat = lastKnownLocation.getLatitude();
-            Log.d(TAG, "longtitude=" + lng + ", latitude=" + lat);
 
-            Log.d("call","this");
-        }
+        //버튼 누르면 call 하게끔 수정
+
+        Button mButton = findViewById(R.id.drive_start_btn);
+
+        mButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (ActivityCompat.checkSelfPermission(DriveActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, DriveActivity.this);
+
+            }
+        });
 
 
-        listProviders = locationManager.getAllProviders();
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, this);
 
 
     }
@@ -106,15 +110,12 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
     protected void onPause() {
         super.onPause();
         locationManager.removeUpdates(this);
+        Log.d("call on Puase","start");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, this);
 
     }
 }
