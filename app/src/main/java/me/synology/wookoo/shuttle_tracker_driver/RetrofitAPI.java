@@ -8,8 +8,11 @@ import retrofit2.http.POST;
 
 public interface RetrofitAPI {
 
-    @POST("bus/upload/")
-    Call<busUploadData> upload(@Body JSONObject body);
+    @POST("bus/gps/upload/")
+    Call<busUploadData> sendGPS(@Body JSONObject body);
+
+    @POST("bus/ride/upload/")
+    Call<busUploadData> sendRide(@Body JSONObject body);
 
 
 }
