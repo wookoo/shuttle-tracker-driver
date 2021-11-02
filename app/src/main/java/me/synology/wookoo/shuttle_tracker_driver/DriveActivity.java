@@ -37,6 +37,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
     private LocationManager locationManager;
     private String TAG = "GPS POSITION";
     String Address= "98:DA:60:01:47:D2";
+    private double lat,lon;
 
     boolean start = false;
 
@@ -50,6 +51,8 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
 
 
         //인텐트에서 sender 받아오기
+        lat= 0;
+        lon = 0;
 
 
         locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
@@ -112,21 +115,10 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
             public void onDataReceived(byte[] data, String message) {
                 message = message.trim();
                 String[] datas = message.split("/");
-                String child = datas[0];
+                String tag = datas[0];
                 String method = datas[1];
                 Log.d("수신 메시지",message);
-                if(child.equals("8953ca8e")){
-                    child = "한정우";
-                }
-                else if (child.equals("a99a258d")){
-                    child = "윤재욱";
-                }
-                else if (child.equals("696bd8d")){
-                    child = "김기준";
-                }
-                else if (child.equals("d9b1fb8d")){
-                    child = "김도현";
-                }
+
                 if(method.equals("on")){
                     method = "탑승";
                 }else{
@@ -136,7 +128,39 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                 Date date = new Date(now);
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
                 String getTime = dateFormat.format(date);
-                Toast.makeText(DriveActivity.this,child +"어린이가 " + method +" 했습니다.",Toast.LENGTH_SHORT).show();
+
+
+                Retrofit retrofit = new Retrofit.Builder()
+                        .baseUrl("http://192.168.1.2:8000")
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build();
+                RetrofitAPI r = retrofit.create(RetrofitAPI.class);
+                JSONObject input = new JSONObject();
+
+                try {
+                    input.put("lat",lat);
+                    input.put("lon",lon);
+                    input.put("tag",tag);
+                    input.put("method",method);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                Call<rideUploadData> c = r.sendRide(input);
+                c.enqueue(new Callback<rideUploadData>() {
+                    @Override
+                    public void onResponse(Call<rideUploadData> call, Response<rideUploadData> response) {
+                        rideUploadData r = response.body();
+                        Log.d("rr",r.getStatus()+"" + r.getName());
+                        Toast.makeText(DriveActivity.this,r.getName() + "어린이가 " + r.getMethod() + " 했습니다.",Toast.LENGTH_SHORT).show();
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<rideUploadData> call, Throwable t) {
+                        Log.d("error",t.getMessage());
+                    }
+                });
+
 
 
 
@@ -179,7 +203,9 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
 
         if(location.getProvider().equals(LocationManager.GPS_PROVIDER)) {
             latitude = location.getLatitude();
+            lat = Math.round(latitude*10000)/10000.0;
             longitude = location.getLongitude();
+            lon = Math.round(longitude*10000)/10000.0;
             //여기서 전송을 하는게 맞는듯
 
             Log.d(TAG + " GPS : ", Double.toString(latitude )+ '/' + Double.toString(longitude));
@@ -191,8 +217,8 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
             RetrofitAPI r = retrofit.create(RetrofitAPI.class);
             JSONObject input = new JSONObject();
             try {
-                input.put("lat",Math.round(latitude*10000)/10000.0);
-                input.put("lon",Math.round(longitude*10000)/10000.0);
+                input.put("lat",lat);
+                input.put("lon",lon);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -201,12 +227,12 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                 @Override
                 public void onResponse(Call<busUploadData> call, Response<busUploadData> response) {
                     busUploadData r = response.body();
-                    Log.d("rr",r.getStatus()+"");
+                    //Log.d("SUCCESS",r.getStatus()+"");
                 }
 
                 @Override
                 public void onFailure(Call<busUploadData> call, Throwable t) {
-                    Log.d("rt",t.getMessage()+"");
+                    Log.d("ERROR RT",t.getMessage()+"");
                 }
             });
 

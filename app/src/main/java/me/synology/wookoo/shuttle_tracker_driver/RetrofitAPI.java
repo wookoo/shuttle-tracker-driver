@@ -12,7 +12,7 @@ public interface RetrofitAPI {
     Call<busUploadData> sendGPS(@Body JSONObject body);
 
     @POST("bus/ride/upload/")
-    Call<busUploadData> sendRide(@Body JSONObject body);
+    Call<rideUploadData> sendRide(@Body JSONObject body);
 
 
 }
