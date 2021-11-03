@@ -69,22 +69,23 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                 Toast.makeText(DriveActivity.this,"버튼 눌림" + start,Toast.LENGTH_SHORT).show();
                 if(!start){
                     //블루투스 페어링 확인하는부분
-                    bt.disconnect();
+                  //  bt.disconnect();
                     locationManager.removeUpdates(DriveActivity.this);
                     mButton.setText("운행시작");
 
                     return;
                 }
-                bt.connect(Address);
+                //bt.connect(Address);
                 mButton.setText("운행종료");
 
                 if (ActivityCompat.checkSelfPermission(DriveActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     return;
                 }
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, DriveActivity.this);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, DriveActivity.this);
                 //여기서 GPS 전송 스레드 시작
             }
         });
+        /*
 
         bt = new BluetoothSPP(this);
         if (!bt.isBluetoothAvailable()) { //블루투스 사용 불가
@@ -177,7 +178,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                 bt.startService(BluetoothState.DEVICE_OTHER); //DEVICE_ANDROID는 안드로이드 기기 끼리
             }
 
-        }
+        }*/
 
 
 
@@ -190,7 +191,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, this);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, this);
 
     }
 
@@ -211,7 +212,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
             Log.d(TAG + " GPS : ", Double.toString(latitude )+ '/' + Double.toString(longitude));
 
             Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("http://192.168.1.2:8000")
+                    .baseUrl("http://192.168.1.71:8000")
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
             RetrofitAPI r = retrofit.create(RetrofitAPI.class);
