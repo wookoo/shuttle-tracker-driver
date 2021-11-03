@@ -266,6 +266,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                         Toast.makeText(DriveActivity.this,"운행이 종료되었습니다",Toast.LENGTH_SHORT).show();
                         start = false;
                         bt.disconnect();
+                        locationManager.removeUpdates(DriveActivity.this);
                         return;
                     }
                     Retrofit retrofit = new Retrofit.Builder()
@@ -371,7 +372,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
             Log.d(TAG + " GPS : ", Double.toString(latitude )+ '/' + Double.toString(longitude));
 
             Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("SERVER_URL")
+                    .baseUrl(SERVER_URL)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
             RetrofitAPI r = retrofit.create(RetrofitAPI.class);
