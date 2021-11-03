@@ -14,5 +14,8 @@ public interface RetrofitAPI {
     @POST("bus/ride/upload/")
     Call<rideUploadData> sendRide(@Body JSONObject body);
 
+    @POST("bus/check/")
+    Call<remainData> check(@Body JSONObject body);
+
 
 }

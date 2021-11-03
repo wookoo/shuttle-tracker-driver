@@ -7,13 +7,13 @@ public class rideUploadData {
     private boolean status;
     @SerializedName(value = "name")
     private String name;
-    @SerializedName(value = "method")
-    private String method;
+    @SerializedName(value = "info")
+    private String info;
 
 
     public boolean getStatus(){
         return this.status;
     }
     public String getName(){return  this.name;}
-    public String getMethod(){return  this.method;}
+    public String getInfo(){return  this.info;}
 }
