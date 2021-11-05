@@ -47,11 +47,14 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
     private BluetoothSPP bt;
     private LocationManager locationManager;
     private String TAG = "GPS POSITION";
-    String Address= "98:DA:60:01:47:D2";
+    String Address= "98:DA:60:01:7A:EF"; //E주소
+    //String Address= "98:DA:60:01:4F:25"; //B 에 대한 주소
+
     private double lat,lon;
-    String SERVER_URL = "http://192.168.1.2:8000";
+    String SERVER_URL = "http://wookoogod.iptime.org:8000/";
 
     boolean start = false;
+    boolean process = false;
 
     Marker marker = null;
     NaverMap naverMap = null;
@@ -105,6 +108,10 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
             public void onClick(View view) {
 
                 //Toast.makeText(DriveActivity.this,"버튼 눌림" + start,Toast.LENGTH_SHORT).show();
+                if(process){
+                    return;
+                }
+                process = true;
                 if(start){
                     //블루투스 페어링 확인하는부분
                     //남았는지 확인
@@ -114,6 +121,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                     builder.setPositiveButton("예",
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
+                                    Log.d("운행 종료 전송","했다");
                                     bt.send("end",true);
                                 }
                             });
@@ -167,6 +175,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
         bt.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() {
             @Override
             public void onDeviceConnected(String name, String address) {
+
                 Toast.makeText(getApplicationContext()
                         , "차량과 연결되었습니다.",Toast.LENGTH_SHORT).show();
                 start = true;
@@ -177,24 +186,60 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                     return;
                 }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, DriveActivity.this);
+                process = false;
             }
 
             @Override
             public void onDeviceDisconnected() {
+                process = false;
+
+                if(start){
+                    AlertDialog.Builder builder = new AlertDialog.Builder(DriveActivity.this);
+                    builder.setTitle("운행오류 발생");
+                    builder.setMessage("차량과 연결이 해제 되어 강제 운행 중지됩니다.");
+                    builder.setCancelable(false);
+                    builder.setPositiveButton("확인",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    locationManager.removeUpdates(DriveActivity.this);
+                                    mButton.setText("운행시작");
+                                    start = false;
+                                    process = false;
+
+                                }
+                            });
+                    builder.show();
+
+
+
+                }
+
 
             }
 
             @Override
             public void onDeviceConnectionFailed() {
-                Toast.makeText(getApplicationContext()
-                        , "차량과 연결에 실패하였습니다.",Toast.LENGTH_SHORT).show();
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(DriveActivity.this);
+                builder.setTitle("운행불가");
+                builder.setMessage("차량과 연결이 실패되어 운행 할 수 없습니다.");
+                builder.setCancelable(false);
+                builder.setPositiveButton("확인",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                process = false;
+                            }
+                        });
+                builder.show();
 
             }
         });
         bt.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
             @Override
             public void onDataReceived(byte[] data, String message) {
+                //process = false;
                 message = message.trim();
+                Log.d("bluetooth",message);
 
 
                 //정해야 한다
@@ -265,8 +310,10 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                         mButton.setText("운행시작");
                         Toast.makeText(DriveActivity.this,"운행이 종료되었습니다",Toast.LENGTH_SHORT).show();
                         start = false;
+
                         bt.disconnect();
-                        locationManager.removeUpdates(DriveActivity.this);
+                        process = false;
+                        //locationManager.removeUpdates(DriveActivity.this);
                         return;
                     }
                     Retrofit retrofit = new Retrofit.Builder()
@@ -288,7 +335,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                         @Override
                         public void onResponse(Call<remainData> call, Response<remainData> response) {
                             remainData r = response.body();
-                            Toast.makeText(DriveActivity.this,"총 " + r.getRemain() + "명이 탑승중입니다 : " + r.getTags(),Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(DriveActivity.this,"총 " + r.getRemain() + "명이 탑승중입니다 : " + r.getTags(),Toast.LENGTH_SHORT).show();
                             AlertDialog.Builder builder = new AlertDialog.Builder(DriveActivity.this);
                             builder.setTitle("운행 종료 불가");
                             builder.setMessage("총 " + r.getRemain() + "명 탑승중입니다.\n탑승자 : "+r.getTags());
