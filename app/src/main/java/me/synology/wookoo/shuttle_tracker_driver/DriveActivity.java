@@ -28,9 +28,13 @@ import com.naver.maps.map.OnMapReadyCallback;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.OverlayImage;
 
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -51,13 +55,16 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
     //String Address= "98:DA:60:01:4F:25"; //B 에 대한 주소
 
     private double lat,lon;
-    String SERVER_URL = "http://wookoogod.iptime.org:8000/";
+    String SERVER_URL = "http://220.69.209.111:8000/";
 
     boolean start = false;
     boolean process = false;
 
     Marker marker = null;
     NaverMap naverMap = null;
+
+    private URI uri;
+    private WebSocketClient mSocketClient;
 
 
 
@@ -73,6 +80,14 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
             mapFragment = MapFragment.newInstance();
             fm.beginTransaction().add(R.id.map_fragment, mapFragment).commit();
         }
+
+        try {
+            uri = new URI("ws://220.69.209.111:8000/ws/");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+
 
         mapFragment.getMapAsync(new OnMapReadyCallback() {
             @Override
@@ -179,6 +194,28 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                 Toast.makeText(getApplicationContext()
                         , "차량과 연결되었습니다.",Toast.LENGTH_SHORT).show();
                 start = true;
+                mSocketClient = new WebSocketClient(uri) {
+                    @Override
+                    public void onOpen(ServerHandshake handshakedata) {
+
+                    }
+
+                    @Override
+                    public void onMessage(String message) {
+                        Log.d("On Message",message);
+                    }
+
+                    @Override
+                    public void onClose(int code, String reason, boolean remote) {
+
+                    }
+
+                    @Override
+                    public void onError(Exception ex) {
+
+                    }
+                };
+                mSocketClient.connect();
 
                 mButton.setText("운행종료");
 
@@ -205,6 +242,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                                     mButton.setText("운행시작");
                                     start = false;
                                     process = false;
+                                    mSocketClient.close();
 
                                 }
                             });
@@ -285,6 +323,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+                    mSocketClient.send(input.toString());
                     Call<rideUploadData> c = r.sendRide(input);
                     c.enqueue(new Callback<rideUploadData>() {
                         @Override
@@ -400,21 +439,29 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
     @Override
     public void onLocationChanged(Location location) {
 
-        double latitude = 0.0;
-        double longitude = 0.0;
+
 
         if(location.getProvider().equals(LocationManager.GPS_PROVIDER)) {
-            latitude = location.getLatitude();
-            lat = Math.round(latitude*10000)/10000.0;
-            longitude = location.getLongitude();
-            lon = Math.round(longitude*10000)/10000.0;
+            lat = location.getLatitude();
+            lat = Math.round(lat*10000)/10000.0;
+            lon = location.getLongitude();
+            lon = Math.round(lon*10000)/10000.0;
             if(marker != null){
                 LatLng nowPos = new LatLng(lat,lon);
                 marker.setPosition(nowPos);
                 naverMap.moveCamera(CameraUpdate.scrollTo(nowPos));
             }
+            JSONObject input = new JSONObject();
+            try {
+                input.put("lat",lat);
+                input.put("lon",lon);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            mSocketClient.send(input.toString());
 
             //여기서 전송을 하는게 맞는듯
+            /*
 
             Log.d(TAG + " GPS : ", Double.toString(latitude )+ '/' + Double.toString(longitude));
 
@@ -443,6 +490,8 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                     Log.d("ERROR RT",t.getMessage()+"");
                 }
             });
+
+             */
 
 
         }
