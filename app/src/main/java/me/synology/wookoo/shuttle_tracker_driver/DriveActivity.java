@@ -51,8 +51,8 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
     private BluetoothSPP bt;
     private LocationManager locationManager;
     private String TAG = "GPS POSITION";
-    String Address= "98:DA:60:01:7A:EF"; //E주소
-    //String Address= "98:DA:60:01:4F:25"; //B 에 대한 주소
+    //String Address= "98:DA:60:01:7A:EF"; //E주소
+    String Address= "98:DA:60:01:4F:25"; //B 에 대한 주소
 
     private double lat,lon;
     String SERVER_URL = "http://220.69.209.111:8000/";
@@ -82,7 +82,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
         }
 
         try {
-            uri = new URI("ws://220.69.209.111:8000/ws/");
+            uri = new URI("ws://220.69.209.111:8000/ws/provider/");
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -137,7 +137,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
                                     Log.d("운행 종료 전송","했다");
-                                    bt.send("end",true);
+                                    bt.send("0",false);
                                 }
                             });
                     builder.setNegativeButton("아니오",
@@ -229,6 +229,12 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
             @Override
             public void onDeviceDisconnected() {
                 process = false;
+                try{
+                    mSocketClient.close();
+                }
+                catch (Exception e){
+
+                }
 
                 if(start){
                     AlertDialog.Builder builder = new AlertDialog.Builder(DriveActivity.this);
@@ -242,7 +248,8 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                                     mButton.setText("운행시작");
                                     start = false;
                                     process = false;
-                                    mSocketClient.close();
+
+
 
                                 }
                             });
@@ -324,12 +331,19 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                         e.printStackTrace();
                     }
                     mSocketClient.send(input.toString());
+                    Log.d("SEND",input.toString());
                     Call<rideUploadData> c = r.sendRide(input);
                     c.enqueue(new Callback<rideUploadData>() {
                         @Override
                         public void onResponse(Call<rideUploadData> call, Response<rideUploadData> response) {
                             rideUploadData r = response.body();
+
                             Log.d("rr",r.getStatus()+"" + r.getName());
+                            if(!r.getStatus()){
+                                Toast.makeText(DriveActivity.this,"등록되지 않은 사용자입니다.",Toast.LENGTH_SHORT).show();
+                                bt.send("1",false);
+                                return;
+                            }
                             Toast.makeText(DriveActivity.this,r.getName() + "어린이가 " + r.getInfo() + " 했습니다.",Toast.LENGTH_SHORT).show();
 
                         }
@@ -349,6 +363,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                         mButton.setText("운행시작");
                         Toast.makeText(DriveActivity.this,"운행이 종료되었습니다",Toast.LENGTH_SHORT).show();
                         start = false;
+
 
                         bt.disconnect();
                         process = false;
@@ -382,6 +397,7 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
                             builder.setPositiveButton("확인",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
+                                            process = false;
                                         }
                                     });
                             builder.show();
@@ -458,7 +474,12 @@ public class DriveActivity extends AppCompatActivity implements LocationListener
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            mSocketClient.send(input.toString());
+            try{
+                mSocketClient.send(input.toString());
+            }catch (Exception e){
+                Log.d("ERRROR",e.toString());
+            }
+
 
             //여기서 전송을 하는게 맞는듯
             /*
